@@ -571,13 +571,15 @@ _CONFIGS = [
             action_expert_variant="gemma_300m_lora",
         ),
         data=SimpleDataConfig(
-            repo_id="local/g1_omnipicker_tool",
+            repo_id="g1_tool_v1",
             base_config=DataConfig(prompt_from_task=True, action_sequence_keys=("action",)),
             data_transforms=lambda model: _transforms.Group(
                 inputs=[southgrid_policy.SouthGridInputs()],
                 outputs=[southgrid_policy.SouthGridOutputs()],
             ),
-            model_transforms=ModelTransformFactory(default_prompt="整理工具"),
+            model_transforms=ModelTransformFactory(
+                default_prompt="Put all the electrical tools into the toolbox."
+            ),
         ),
         weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi05_base/params"),
         freeze_filter=pi0_config.Pi0Config(
@@ -588,7 +590,7 @@ _CONFIGS = [
             action_expert_variant="gemma_300m_lora",
         ).get_freeze_filter(),
         ema_decay=None,
-        batch_size=2,
+        batch_size=32,
         num_train_steps=30_000,
         lr_schedule=_optimizer.CosineDecaySchedule(
             warmup_steps=1_000,
@@ -600,7 +602,11 @@ _CONFIGS = [
         save_interval=1_000,
         keep_period=None,
         wandb_enabled=False,
-        policy_metadata={"robot": "g1_omnipicker", "robot_action_dim": 18, "task": "整理工具"},
+        policy_metadata={
+            "robot": "g1_omnipicker",
+            "robot_action_dim": 18,
+            "task": "Put all the electrical tools into the toolbox.",
+        },
     ),
     #
     # Inference Aloha configs.
