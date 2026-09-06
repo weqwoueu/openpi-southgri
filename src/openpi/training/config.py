@@ -559,7 +559,7 @@ class TrainConfig:
 
 # Use `get_config` if you need to get a config by name in your code.
 _CONFIGS = [
-    # SouthGrid task 3: two-camera g1_omnipicker full fine-tuning with 2-way FSDP.
+    # SouthGrid task 3: two-camera g1_omnipicker full fine-tuning with 3-way FSDP.
     # Keep the pretrained model's 32-D projection; robot state/actions are 18-D.
     TrainConfig(
         name="pi05_g1_omnipicker_tool_full_finetune",
@@ -581,8 +581,8 @@ _CONFIGS = [
         ),
         weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi05_base/params"),
         ema_decay=0.99,
-        # Global batch size: 8 samples per GPU with two-way FSDP.
-        batch_size=16,
+        # Global batch size: 1 sample per GPU with three-way FSDP.
+        batch_size=3,
         num_train_steps=30_000,
         lr_schedule=_optimizer.CosineDecaySchedule(
             warmup_steps=1_000,
@@ -594,7 +594,7 @@ _CONFIGS = [
         save_interval=1_000,
         keep_period=None,
         wandb_enabled=False,
-        fsdp_devices=2,
+        fsdp_devices=3,
         policy_metadata={
             "robot": "g1_omnipicker",
             "robot_action_dim": 18,
