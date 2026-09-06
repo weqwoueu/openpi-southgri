@@ -559,16 +559,14 @@ class TrainConfig:
 
 # Use `get_config` if you need to get a config by name in your code.
 _CONFIGS = [
-    # SouthGrid task 3: two-camera g1_omnipicker LoRA baseline.
+    # SouthGrid task 3: two-camera g1_omnipicker full fine-tuning with 2-way FSDP.
     # Keep the pretrained model's 32-D projection; robot state/actions are 18-D.
     TrainConfig(
-        name="pi05_g1_omnipicker_tool_lora",
+        name="pi05_g1_omnipicker_tool_full_finetune",
         model=pi0_config.Pi0Config(
             pi05=True,
             action_dim=32,
             action_horizon=50,
-            paligemma_variant="gemma_2b_lora",
-            action_expert_variant="gemma_300m_lora",
         ),
         data=SimpleDataConfig(
             repo_id="g1_tool_v1",
@@ -582,26 +580,20 @@ _CONFIGS = [
             ),
         ),
         weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi05_base/params"),
-        freeze_filter=pi0_config.Pi0Config(
-            pi05=True,
-            action_dim=32,
-            action_horizon=50,
-            paligemma_variant="gemma_2b_lora",
-            action_expert_variant="gemma_300m_lora",
-        ).get_freeze_filter(),
-        ema_decay=None,
+        ema_decay=0.99,
         batch_size=32,
         num_train_steps=30_000,
         lr_schedule=_optimizer.CosineDecaySchedule(
             warmup_steps=1_000,
-            peak_lr=2e-4,
+            peak_lr=5e-5,
             decay_steps=30_000,
-            decay_lr=2e-5,
+            decay_lr=5e-6,
         ),
         log_interval=100,
         save_interval=1_000,
         keep_period=None,
         wandb_enabled=False,
+        fsdp_devices=2,
         policy_metadata={
             "robot": "g1_omnipicker",
             "robot_action_dim": 18,
