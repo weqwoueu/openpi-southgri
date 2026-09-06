@@ -580,9 +580,10 @@ _CONFIGS = [
             ),
         ),
         weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi05_base/params"),
-        ema_decay=0.99,
-        # Global batch size: 8 samples per GPU with two-way FSDP.
-        batch_size=16,
+        # Disable EMA to reduce the memory footprint of full fine-tuning.
+        ema_decay=None,
+        # Global batch size: 16 samples per GPU with two-way FSDP.
+        batch_size=32,
         num_train_steps=30_000,
         lr_schedule=_optimizer.CosineDecaySchedule(
             warmup_steps=1_000,
