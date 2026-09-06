@@ -581,7 +581,8 @@ _CONFIGS = [
         ),
         weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi05_base/params"),
         ema_decay=0.99,
-        batch_size=32,
+        # Global batch size: 8 samples per GPU with two-way FSDP.
+        batch_size=16,
         num_train_steps=30_000,
         lr_schedule=_optimizer.CosineDecaySchedule(
             warmup_steps=1_000,
