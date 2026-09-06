@@ -20,6 +20,7 @@ import openpi.models.tokenizer as _tokenizer
 import openpi.policies.aloha_policy as aloha_policy
 import openpi.policies.droid_policy as droid_policy
 import openpi.policies.libero_policy as libero_policy
+import openpi.policies.southgrid_policy as southgrid_policy
 import openpi.shared.download as _download
 import openpi.shared.normalize as _normalize
 import openpi.training.droid_rlds_dataset as droid_rlds_dataset
@@ -558,6 +559,49 @@ class TrainConfig:
 
 # Use `get_config` if you need to get a config by name in your code.
 _CONFIGS = [
+    # SouthGrid task 3: two-camera g1_omnipicker LoRA baseline.
+    # Keep the pretrained model's 32-D projection; robot state/actions are 18-D.
+    TrainConfig(
+        name="pi05_g1_omnipicker_tool_lora",
+        model=pi0_config.Pi0Config(
+            pi05=True,
+            action_dim=32,
+            action_horizon=50,
+            paligemma_variant="gemma_2b_lora",
+            action_expert_variant="gemma_300m_lora",
+        ),
+        data=SimpleDataConfig(
+            repo_id="local/g1_omnipicker_tool",
+            base_config=DataConfig(prompt_from_task=True, action_sequence_keys=("action",)),
+            data_transforms=lambda model: _transforms.Group(
+                inputs=[southgrid_policy.SouthGridInputs()],
+                outputs=[southgrid_policy.SouthGridOutputs()],
+            ),
+            model_transforms=ModelTransformFactory(default_prompt="整理工具"),
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi05_base/params"),
+        freeze_filter=pi0_config.Pi0Config(
+            pi05=True,
+            action_dim=32,
+            action_horizon=50,
+            paligemma_variant="gemma_2b_lora",
+            action_expert_variant="gemma_300m_lora",
+        ).get_freeze_filter(),
+        ema_decay=None,
+        batch_size=2,
+        num_train_steps=30_000,
+        lr_schedule=_optimizer.CosineDecaySchedule(
+            warmup_steps=1_000,
+            peak_lr=2e-4,
+            decay_steps=30_000,
+            decay_lr=2e-5,
+        ),
+        log_interval=100,
+        save_interval=1_000,
+        keep_period=None,
+        wandb_enabled=False,
+        policy_metadata={"robot": "g1_omnipicker", "robot_action_dim": 18, "task": "整理工具"},
+    ),
     #
     # Inference Aloha configs.
     #
