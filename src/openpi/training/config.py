@@ -644,6 +644,48 @@ _CONFIGS = [
             "task": "Put all the electrical tools into the toolbox.",
         },
     ),
+    TrainConfig(
+        name="pi05_g1_omnipicker_tool_full_finetune_v3",
+        model=pi0_config.Pi0Config(
+            pi05=True,
+            action_dim=32,
+            action_horizon=50,
+        ),
+        data=SimpleDataConfig(
+            repo_id="g1_tool_v3_mixed",
+            base_config=DataConfig(prompt_from_task=True, action_sequence_keys=("action",)),
+            data_transforms=lambda model: _transforms.Group(
+                inputs=[southgrid_policy.SouthGridInputs()],
+                outputs=[southgrid_policy.SouthGridOutputs()],
+            ),
+            model_transforms=ModelTransformFactory(
+                default_prompt="Put all the electrical tools into the toolbox."
+            ),
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi05_base/params"),
+        ema_decay=0.99,
+        # Global batch size: four samples per GPU with eight-way FSDP.
+        batch_size=56,
+        num_train_steps=30_000,
+        # Match the official pi05_libero full-finetuning learning-rate schedule.
+        lr_schedule=_optimizer.CosineDecaySchedule(
+            warmup_steps=10_000,
+            peak_lr=5e-5,
+            decay_steps=1_000_000,
+            decay_lr=5e-5,
+        ),
+        log_interval=100,
+        save_interval=15000,
+        keep_period=15000,
+        wandb_enabled=False,
+        fsdp_devices=7,
+        policy_metadata={
+            "robot": "g1_omnipicker",
+            "robot_action_dim": 18,
+            "task": "Put all the electrical tools into the toolbox.",
+        },
+    ),
+
     #
     # Inference Aloha configs.
     #
